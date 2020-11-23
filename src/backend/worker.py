@@ -200,6 +200,9 @@ def init_translator(state):
         else:
             from backend.euxfel import EUxfelPulseTranslator
             return EUxfelPulseTranslator(state)
+    elif(state['Facility'] == 'CNILab'):
+        from backend.cnilab import CNILabTranslator
+        return CNILabTranslator(state)
 
     else:
         raise ValueError('Facility %s not supported' % (state['Facility']))
