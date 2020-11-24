@@ -33,11 +33,11 @@ def onEvent(evt):
         plotting.image.plotImage(evt['photonPixelDetectors'][key], send_rate=10, group='Raw')
 
     # "Dark" correction
-    img_dark = evt['photonPixelDetectors']['SIMCam'].data - 1.
+    img_dark = evt['photonPixelDetectors']['SIMCAM'].data - 1.
     add_record(evt["analysis"], "analysis", "dark_corrected", img_dark)
     plotting.image.plotImage(evt['analysis']['dark_corrected'], group='Corrected')
 
     # RMS value
-    rms = evt['photonPixelDetectors']['SIMCam'].data.std()
+    rms = evt['photonPixelDetectors']['SIMCAM'].data.std()
     add_record(evt['analysis'], 'analysis', 'RMS', rms)
     plotting.line.plotHistory(evt['analysis']['RMS'], history=10000)
