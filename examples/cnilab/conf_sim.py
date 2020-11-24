@@ -17,8 +17,7 @@ state['Facility'] = 'CNILab'
 # Create a dummy facility
 state['CNILab'] = {
     #'Repetition Rate' : 10,
-    #'SenderIP': '127.0.0.1',
-    'SenderIP': '131.169.116.105',
+    'SenderIP': '127.0.0.1',
     'SenderPort': 5678,
 }
 
@@ -34,11 +33,11 @@ def onEvent(evt):
         plotting.image.plotImage(evt['photonPixelDetectors'][key], send_rate=10, group='Raw')
 
     # "Dark" correction
-    img_dark = evt['photonPixelDetectors']['iStar-sCMOS18F73-S'].data - 1.
+    img_dark = evt['photonPixelDetectors']['SIMCam'].data - 1.
     add_record(evt["analysis"], "analysis", "dark_corrected", img_dark)
     plotting.image.plotImage(evt['analysis']['dark_corrected'], group='Corrected')
 
     # RMS value
-    rms = evt['photonPixelDetectors']['iStar-sCMOS18F73-S'].data.std()
+    rms = evt['photonPixelDetectors']['SIMCam'].data.std()
     add_record(evt['analysis'], 'analysis', 'RMS', rms)
     plotting.line.plotHistory(evt['analysis']['RMS'], history=10000)
