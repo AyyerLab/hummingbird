@@ -5,6 +5,7 @@ import analysis.event
 import plotting.image
 import plotting.line
 import numpy as np
+import h5py as h5
 from backend.record import add_record
 
 # Set new random seed
@@ -18,39 +19,51 @@ state['Facility'] = 'CNILab'
 state['CNILab'] = {
     #'Repetition Rate' : 10,
     #'SenderIP': '127.0.0.1',
-    'SenderIP': '131.169.116.105',
+    #'SenderIP': '131.169.116.105',
+    'SenderIP': '131.169.224.229', #office pc
     'SenderPort': 5678,
 }
 
+if state['CNILab']['SenderIP'] != '131.169.116.105':
+    name = 'test'
+else:
+    name = 'iStar-cCMOS18F73-S'
+
+data_sum = None
+dark = []
+dpath = '/home/wittetam/CNIDetector/data/raw/'
+fname = 'Run22_0000.h5'
+with h5.File(dpath+fname, 'r') as f:
+    for key in f:
+        dark.append(np.array(f[key]))
+dark = np.mean(np.array(dark), axis=0)
 # This function is called for every single event
 # following the given recipe of analysis
 def onEvent(evt):
+    global data_sum
     # Processing rate [Hz]
     analysis.event.printProcessingRate()
     sys.stdout.flush()
-    #my_data = evt['photonPixelDetectors']['iStar-sCMOS18F73-S'].data
-    my_data = evt['photonPixelDetectors']['dude'].data
-    print(my_data.shape)
-    print(my_data.dtype)
-    print(my_data.max())
-    print(my_data.min())
-    if np.isnan(np.min(my_data)) or None in my_data:
-        print('noooooooooooooooooooo')
-
-
+    my_data = evt['photonPixelDetectors'][name].data
+    if data_sum is None:
+        data_sum = my_data-dark
+    else:
+        data_sum += my_data - dark
+    
     # Visualize detector image(s)
     for key in evt['photonPixelDetectors'].keys():
-        #plotting.image.plotImage(evt['photonPixelDetectors'][key], send_rate=10, group='Raw')
-        plotting.image.plotImage(evt['photonPixelDetectors'][key], history=10, send_rate=10, group='Raw')
+        plotting.image.plotImage(evt['photonPixelDetectors'][key], send_rate=10, group='Raw')
 
     # "Dark" correction
-    #img_dark = evt['photonPixelDetectors']['iStar-sCMOS18F73-S'].data - 1.
-    #img_dark = evt['photonPixelDetectors']['dude'].data - 1.
-    #add_record(evt["analysis"], "analysis", "dark_corrected", img_dark)
-    #plotting.image.plotImage(evt['analysis']['dark_corrected'], group='Corrected')
+    img_dark = evt['photonPixelDetectors'][name].data - dark
+    add_record(evt["analysis"], "analysis", "dark_corrected", img_dark)
+    plotting.image.plotImage(evt['analysis']['dark_corrected'], group='Corrected')
+
+    #Accumulated image
+    add_record(evt['analysis'], 'analysis', 'accumulated', data_sum)
+    plotting.image.plotImage(evt['analysis']['accumulated'], group='Corrected')
 
     # RMS value
-    #rms = evt['photonPixelDetectors']['iStar-sCMOS18F73-S'].data.std()
-    rms = evt['photonPixelDetectors']['dude'].data.std()
+    rms = evt['photonPixelDetectors'][name].data.std()
     add_record(evt['analysis'], 'analysis', 'RMS', rms)
     plotting.line.plotHistory(evt['analysis']['RMS'], history=10000)
